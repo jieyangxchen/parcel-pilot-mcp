@@ -29,6 +29,7 @@ rsync -az --delete \
   --exclude data \
   --exclude var \
   --exclude browser-profiles \
+  --exclude tmp-login \
   --exclude .env \
   --exclude .git \
   "$ROOT_DIR/" "$TARGET/"

@@ -2,7 +2,12 @@
 
 Local-first MCP server for personal package tracking on Taobao, JD, and Cainiao.
 
-This project is designed for a personal Linux server: scan the Taobao/JD QR login once, keep the browser sessions on your own machine, then ask an AI client to call MCP tools such as `get_my_packages` and `track_package`.
+This project lets you scan a shopping-site login QR code once, keep the browser session in a private local profile, then ask an AI client to call MCP tools such as `get_my_packages` and `track_package`.
+
+It supports two deployment styles:
+
+- Mac/local first: safest and easiest for personal use.
+- Personal Linux server: useful for always-on access, but protect the saved browser session carefully.
 
 ## What It Does
 
@@ -24,9 +29,12 @@ This project is designed for a personal Linux server: scan the Taobao/JD QR logi
 This is not an official Taobao/JD API integration. It uses your own local browser sessions.
 
 - Do not commit `data/`, `var/`, `browser-profiles/`, or `.env`.
+- Do not commit `tmp-login/`; it is only for temporary screenshots or HTML captured during debugging.
 - Do not expose the MCP process directly to the public internet.
 - Use this for your own account on your own server.
 - Captcha, slider verification, SMS verification, and risk-control prompts must be completed manually. This project does not bypass them.
+- Treat `browser-profiles/` as an already logged-in browser. Anyone with access to it may be able to view orders, logistics, addresses, and account pages.
+- Keep payment risk low by disabling small-amount passwordless payment, automatic deductions, and low-friction checkout features in the relevant shopping/payment accounts.
 
 ## Install
 
@@ -58,6 +66,22 @@ PACKAGE_ASSISTANT_TIMEZONE=Asia/Shanghai
 ```bash
 npm run build
 npm start
+```
+
+## Mac Local Workflow
+
+For first login on macOS, use a visible Chromium window:
+
+```bash
+PACKAGE_ASSISTANT_HEADLESS=false node dist/cli/open-login-browser.js taobao
+```
+
+After scanning and completing any manual verification, sync and query:
+
+```bash
+node dist/cli/call-tool.js sync_packages '{"source":"taobao"}'
+node dist/cli/call-tool.js get_my_packages
+node dist/cli/call-tool.js track_package '{"packageId":"taobao-ORDER_ID"}'
 ```
 
 For MCP clients, configure stdio command:
@@ -184,7 +208,8 @@ WantedBy=multi-user.target
 ## Current Limits
 
 - Taobao and JD page selectors may need updates when their websites change.
-- The first implementation parses stable package-card selectors and visible logistics/order HTML. Real accounts should verify parsing after login.
+- The Taobao adapter currently parses the bought-list order page and extracts order-level logistics summaries such as "运输中预计今天送达".
+- JD and Cainiao use the same browser-session adapter structure, but their real logged-in page selectors should be verified with personal accounts before relying on them.
 
 ## Development
 

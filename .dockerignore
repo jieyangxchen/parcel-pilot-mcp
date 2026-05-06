@@ -3,6 +3,7 @@ dist/
 data/
 var/
 browser-profiles/
+tmp-login/
 .env
 .git/
 .DS_Store

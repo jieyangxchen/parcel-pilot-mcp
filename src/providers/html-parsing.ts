@@ -7,9 +7,11 @@ import type { PackageEvent, PackageRecord, PackageSource, PackageStatus } from "
 const CARD_SELECTORS = [
   "[data-package-card]",
   "[data-parcel-card]",
+  "[id^='shopOrderContainer_']",
   ".package-card",
   ".parcel-card",
   ".order-card",
+  ".trade-bought-list-order-container",
   ".logistics-card"
 ].join(",");
 
@@ -19,8 +21,22 @@ export function parsePackageCards(html: string, source: PackageSource): PackageR
 
   $(CARD_SELECTORS).each((_, element) => {
     const card = $(element);
-    const title = textOf($, card, ["[data-title]", ".package-title", ".parcel-title", ".order-title"]);
-    const statusText = textOf($, card, ["[data-status]", ".package-status", ".parcel-status", ".order-status"]);
+    const title = textOf($, card, [
+      "[data-title]",
+      ".package-title",
+      ".parcel-title",
+      ".order-title",
+      "[class^='titleText--']",
+      "[class*=' titleText--']"
+    ]);
+    const statusText = textOf($, card, [
+      "[data-status]",
+      ".package-status",
+      ".parcel-status",
+      ".order-status",
+      "[class^='shopInfoStatus--']",
+      "[class*=' shopInfoStatus--']"
+    ]);
     const trackingNumber = textOf($, card, [
       "[data-tracking-number]",
       ".tracking-number",
@@ -28,17 +44,30 @@ export function parsePackageCards(html: string, source: PackageSource): PackageR
       ".waybill-code"
     ]);
     const carrier = textOf($, card, ["[data-carrier]", ".package-carrier", ".carrier"]);
-    const orderId = card.attr("data-order-id") ?? textOf($, card, ["[data-order-id]", ".order-id"]);
+    const orderId =
+      card.attr("data-order-id") ??
+      orderIdFromContainerId(card.attr("id")) ??
+      extractOrderId(textOf($, card, [
+        "[data-order-id]",
+        ".order-id",
+        "[class^='shopInfoOrderId--']",
+        "[class*=' shopInfoOrderId--']"
+      ]));
     const packageUrl = attrOf($, card, ["[data-package-url]", "a[href*='logistics']", "a[href*='track']"], "href");
     const lastUpdatedAt =
       attrOf($, card, ["[data-last-updated]", ".last-updated", "time"], "datetime") ??
-      textOf($, card, ["[data-last-updated]", ".last-updated"]);
-    const events = parseEvents($, card);
-    const status = toPackageStatus(statusText);
+      textOf($, card, [
+        "[data-last-updated]",
+        ".last-updated",
+        "[class^='shopInfoOrderTime--']",
+        "[class*=' shopInfoOrderTime--']"
+      ]);
+    const status = toPackageStatus(`${statusText} ${card.text()}`);
+    const events = parseEvents($, card, status);
     const deliveredAt = status === "delivered" ? events[0]?.time ?? lastUpdatedAt : undefined;
 
     records.push({
-      id: card.attr("data-id") ?? stablePackageId(source, orderId, trackingNumber, title),
+      id: card.attr("data-id") ?? (orderId ? `${source}-${orderId}` : stablePackageId(source, orderId, trackingNumber, title)),
       source,
       title: title || "Unknown package",
       status,
@@ -78,14 +107,14 @@ export function toPackageStatus(text: string): PackageStatus {
     return "exception";
   }
 
-  if (containsAny(normalized, ["运输", "已发货", "已揽收", "transit", "shipped", "picked up"])) {
+  if (containsAny(normalized, ["运输", "已发货", "卖家已发货", "已揽收", "transit", "shipped", "picked up"])) {
     return "in_transit";
   }
 
   return "unknown";
 }
 
-function parseEvents($: CheerioAPI, card: Cheerio<AnyNode>): PackageEvent[] {
+function parseEvents($: CheerioAPI, card: Cheerio<AnyNode>, status: PackageStatus): PackageEvent[] {
   const events: PackageEvent[] = [];
 
   card.find("[data-event], .event, .trace-item, .logistics-event").each((_, element) => {
@@ -100,6 +129,13 @@ function parseEvents($: CheerioAPI, card: Cheerio<AnyNode>): PackageEvent[] {
       description
     });
   });
+
+  if (events.length === 0) {
+    const description = extractInlineLogisticsEvent(collapseWhitespace(card.text()), status);
+    if (description) {
+      events.push({ description });
+    }
+  }
 
   return events;
 }
@@ -141,6 +177,37 @@ function containsAny(text: string, needles: string[]): boolean {
 
 function collapseWhitespace(text: string): string {
   return text.replace(/\s+/g, " ").trim();
+}
+
+function orderIdFromContainerId(id: string | undefined): string | undefined {
+  return id?.match(/^shopOrderContainer_(\d+)$/)?.[1];
+}
+
+function extractOrderId(text: string): string | undefined {
+  return text.match(/订单号[:：]?\s*(\d+)/)?.[1];
+}
+
+function extractInlineLogisticsEvent(text: string, status: PackageStatus): string | undefined {
+  const patterns = [
+    /已签收[^实付确认再买查看延长加入申请评价]+/,
+    /运输中预计[^实付确认再买查看延长加入申请评价]+/,
+    /运输中/,
+    /待发货[^实付确认再买查看延长加入申请评价]+/,
+    /卖家已发货/
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern)?.[0]?.trim();
+    if (match) {
+      return match;
+    }
+  }
+
+  if (status === "in_transit") {
+    return "卖家已发货";
+  }
+
+  return undefined;
 }
 
 function stablePackageId(

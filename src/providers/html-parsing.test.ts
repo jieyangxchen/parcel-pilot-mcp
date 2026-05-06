@@ -73,4 +73,32 @@ describe("parsePackageCards", () => {
       deliveredAt: "2026-05-06T10:00:00.000+08:00"
     });
   });
+
+  it("parses Taobao bought-list order containers from the real page structure", () => {
+    const html = `
+      <div id="shopOrderContainer_3299970000089003896" class="trade-bought-list-order-container">
+        <span class="shopInfoOrderTime--abc">2026-05-04</span>
+        <span class="shopInfoOrderId--abc">订单号: 3299970000089003896</span>
+        <a class="shopInfoName--abc">迈金运动户外旗舰店</a>
+        <span class="shopInfoStatus--abc">卖家已发货</span>
+        <span class="titleText--abc">码表配件/自行车码表座</span>
+        <div>运输中预计今天送达</div>
+        <div>确认收货</div>
+        <div>查看物流</div>
+      </div>
+    `;
+
+    const records = parsePackageCards(html, "taobao");
+
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({
+      id: "taobao-3299970000089003896",
+      source: "taobao",
+      title: "码表配件/自行车码表座",
+      status: "in_transit",
+      orderId: "3299970000089003896",
+      lastEvent: "运输中预计今天送达",
+      lastUpdatedAt: "2026-05-04"
+    });
+  });
 });

@@ -14,3 +14,5 @@ services:
       - ./data:/app/data
       - ./browser-profiles:/app/browser-profiles
       - ./var:/app/var
+    ports:
+      - "127.0.0.1:6080:6080"

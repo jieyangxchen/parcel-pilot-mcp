@@ -4,5 +4,6 @@ dist/
 data/
 var/
 browser-profiles/
+tmp-login/
 *.log
 .DS_Store

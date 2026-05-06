@@ -122,6 +122,25 @@ docker compose run --rm -T package-assistant node dist/cli/call-tool.js sync_pac
 
 The screenshots are written under `var/login/` on the server.
 
+For an interactive login page that does not expire before you scan, start the remote browser:
+
+```bash
+cd /opt/personal-package-assistant-mcp
+docker compose run --rm --service-ports package-assistant ./scripts/remote-browser.sh taobao
+```
+
+Then create an SSH tunnel from your workstation:
+
+```bash
+ssh -N -L 6080:127.0.0.1:6080 user@your-server
+```
+
+Open:
+
+```text
+http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale
+```
+
 For an MCP client that can reach the server through SSH, configure stdio with:
 
 ```json

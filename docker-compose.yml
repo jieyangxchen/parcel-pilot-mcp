@@ -1,0 +1,16 @@
+services:
+  package-assistant:
+    build: .
+    image: personal-package-assistant-mcp:local
+    stdin_open: true
+    tty: false
+    environment:
+      PACKAGE_ASSISTANT_DATA_DIR: /app/data
+      PACKAGE_ASSISTANT_PROFILE_DIR: /app/browser-profiles
+      PACKAGE_ASSISTANT_ARTIFACT_DIR: /app/var
+      PACKAGE_ASSISTANT_HEADLESS: "true"
+      PACKAGE_ASSISTANT_TIMEZONE: Asia/Shanghai
+    volumes:
+      - ./data:/app/data
+      - ./browser-profiles:/app/browser-profiles
+      - ./var:/app/var

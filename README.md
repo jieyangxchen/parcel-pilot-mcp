@@ -99,7 +99,7 @@ PACKAGE_ASSISTANT_HEADLESS=false npm run dev
 
 Recommended server setup:
 
-- Node.js 20+
+- Docker and Docker Compose
 - Private SSH access
 - MCP used over stdio by an AI client running on the same server, or through SSH/VPN
 - No public unauthenticated HTTP endpoint
@@ -110,13 +110,32 @@ Deploy from your workstation:
 ./scripts/aliyun-deploy.sh user@your-server:/opt/personal-package-assistant-mcp
 ```
 
-Then SSH into the server:
+The script uploads source and builds the Docker image on the server. Run one-off tools for login and verification:
 
 ```bash
 cd /opt/personal-package-assistant-mcp
-npm ci
-npm run build
-npx playwright install-deps chromium
+docker compose run --rm -T package-assistant node dist/cli/call-tool.js login_taobao
+docker compose run --rm -T package-assistant node dist/cli/call-tool.js login_jd
+docker compose run --rm -T package-assistant node dist/cli/call-tool.js login_cainiao
+docker compose run --rm -T package-assistant node dist/cli/call-tool.js sync_packages
+```
+
+The screenshots are written under `var/login/` on the server.
+
+For an MCP client that can reach the server through SSH, configure stdio with:
+
+```json
+{
+  "mcpServers": {
+    "personal-package-assistant": {
+      "command": "ssh",
+      "args": [
+        "user@your-server",
+        "cd /opt/personal-package-assistant-mcp && docker compose run --rm -T package-assistant"
+      ]
+    }
+  }
+}
 ```
 
 ## systemd Example

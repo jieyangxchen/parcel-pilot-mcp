@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "call-tool": "tsx src/cli/call-tool.ts",
     "dev": "tsx src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",

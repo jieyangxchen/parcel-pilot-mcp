@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadConfig } from "../config.js";
 import { BrowserSessionManager } from "../browser/browser-session-manager.js";
 import { JsonPackageStore } from "../storage/json-package-store.js";
@@ -10,9 +11,23 @@ import { TaobaoProvider } from "../providers/taobao-provider.js";
 
 type ToolName = keyof ToolHandlers;
 
+const TOOL_NAME_ALIASES: Record<string, ToolName> = {
+  login_taobao: "loginTaobao",
+  login_jd: "loginJd",
+  login_cainiao: "loginCainiao",
+  sync_packages: "syncPackages",
+  get_my_packages: "getMyPackages",
+  track_package: "trackPackage",
+  get_delivered_today: "getDeliveredToday"
+};
+
+export function resolveToolName(input: string): ToolName {
+  return TOOL_NAME_ALIASES[input] ?? (input as ToolName);
+}
+
 async function main(): Promise<void> {
-  const [toolName, jsonInput = "{}"] = process.argv.slice(2) as [ToolName | undefined, string?];
-  if (!toolName) {
+  const [toolNameInput, jsonInput = "{}"] = process.argv.slice(2) as [string | undefined, string?];
+  if (!toolNameInput) {
     throw new Error(`Usage: node dist/cli/call-tool.js <toolName> [jsonInput]`);
   }
 
@@ -33,6 +48,7 @@ async function main(): Promise<void> {
       ]
     });
 
+    const toolName = resolveToolName(toolNameInput);
     const handler = handlers[toolName];
     if (typeof handler !== "function") {
       throw new Error(`Unknown tool: ${toolName}`);
@@ -46,7 +62,10 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+const currentFile = fileURLToPath(import.meta.url);
+if (process.argv[1] === currentFile) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

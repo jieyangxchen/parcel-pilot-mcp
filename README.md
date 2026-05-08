@@ -1,4 +1,4 @@
-# Personal Package Assistant MCP
+# Parcel Pilot MCP
 
 Local-first MCP server for personal package tracking on Taobao, JD, and Cainiao.
 
@@ -89,13 +89,13 @@ For MCP clients, configure stdio command:
 ```json
 {
   "mcpServers": {
-    "personal-package-assistant": {
+    "parcel-pilot": {
       "command": "node",
-      "args": ["/absolute/path/personal-package-assistant-mcp/dist/server.js"],
+      "args": ["/absolute/path/parcel-pilot-mcp/dist/server.js"],
       "env": {
-        "PACKAGE_ASSISTANT_DATA_DIR": "/absolute/path/personal-package-assistant-mcp/data",
-        "PACKAGE_ASSISTANT_PROFILE_DIR": "/absolute/path/personal-package-assistant-mcp/browser-profiles",
-        "PACKAGE_ASSISTANT_ARTIFACT_DIR": "/absolute/path/personal-package-assistant-mcp/var",
+        "PACKAGE_ASSISTANT_DATA_DIR": "/absolute/path/parcel-pilot-mcp/data",
+        "PACKAGE_ASSISTANT_PROFILE_DIR": "/absolute/path/parcel-pilot-mcp/browser-profiles",
+        "PACKAGE_ASSISTANT_ARTIFACT_DIR": "/absolute/path/parcel-pilot-mcp/var",
         "PACKAGE_ASSISTANT_HEADLESS": "true",
         "PACKAGE_ASSISTANT_TIMEZONE": "Asia/Shanghai"
       }
@@ -131,13 +131,13 @@ Recommended server setup:
 Deploy from your workstation:
 
 ```bash
-./scripts/aliyun-deploy.sh user@your-server:/opt/personal-package-assistant-mcp
+./scripts/aliyun-deploy.sh user@your-server:/opt/parcel-pilot-mcp
 ```
 
 The script uploads source and builds the Docker image on the server. Run one-off tools for login and verification:
 
 ```bash
-cd /opt/personal-package-assistant-mcp
+cd /opt/parcel-pilot-mcp
 docker compose run --rm -T package-assistant node dist/cli/call-tool.js login_taobao
 docker compose run --rm -T package-assistant node dist/cli/call-tool.js login_jd
 docker compose run --rm -T package-assistant node dist/cli/call-tool.js login_cainiao
@@ -149,7 +149,7 @@ The screenshots are written under `var/login/` on the server.
 For an interactive login page that does not expire before you scan, start the remote browser:
 
 ```bash
-cd /opt/personal-package-assistant-mcp
+cd /opt/parcel-pilot-mcp
 docker compose run --rm --service-ports package-assistant ./scripts/remote-browser.sh taobao
 ```
 
@@ -170,11 +170,11 @@ For an MCP client that can reach the server through SSH, configure stdio with:
 ```json
 {
   "mcpServers": {
-    "personal-package-assistant": {
+    "parcel-pilot": {
       "command": "ssh",
       "args": [
         "user@your-server",
-        "cd /opt/personal-package-assistant-mcp && docker compose run --rm -T package-assistant"
+        "cd /opt/parcel-pilot-mcp && docker compose run --rm -T package-assistant"
       ]
     }
   }
@@ -187,18 +187,18 @@ MCP over stdio is usually launched by the client, so a long-running service is o
 
 ```ini
 [Unit]
-Description=Personal Package Assistant MCP
+Description=Parcel Pilot MCP
 After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/personal-package-assistant-mcp
-Environment=PACKAGE_ASSISTANT_DATA_DIR=/opt/personal-package-assistant-mcp/data
-Environment=PACKAGE_ASSISTANT_PROFILE_DIR=/opt/personal-package-assistant-mcp/browser-profiles
-Environment=PACKAGE_ASSISTANT_ARTIFACT_DIR=/opt/personal-package-assistant-mcp/var
+WorkingDirectory=/opt/parcel-pilot-mcp
+Environment=PACKAGE_ASSISTANT_DATA_DIR=/opt/parcel-pilot-mcp/data
+Environment=PACKAGE_ASSISTANT_PROFILE_DIR=/opt/parcel-pilot-mcp/browser-profiles
+Environment=PACKAGE_ASSISTANT_ARTIFACT_DIR=/opt/parcel-pilot-mcp/var
 Environment=PACKAGE_ASSISTANT_HEADLESS=true
 Environment=PACKAGE_ASSISTANT_TIMEZONE=Asia/Shanghai
-ExecStart=/usr/bin/node /opt/personal-package-assistant-mcp/dist/server.js
+ExecStart=/usr/bin/node /opt/parcel-pilot-mcp/dist/server.js
 Restart=on-failure
 
 [Install]

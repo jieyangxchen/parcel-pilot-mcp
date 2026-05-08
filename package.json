@@ -1,10 +1,10 @@
 {
-  "name": "personal-package-assistant-mcp",
+  "name": "parcel-pilot-mcp",
   "version": "0.1.0",
   "description": "Local-first MCP server that uses personal browser sessions to query Taobao and JD package progress.",
   "type": "module",
   "bin": {
-    "personal-package-assistant-mcp": "./dist/server.js"
+    "parcel-pilot-mcp": "./dist/server.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

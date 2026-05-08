@@ -1,7 +1,7 @@
 services:
   package-assistant:
     build: .
-    image: personal-package-assistant-mcp:local
+    image: parcel-pilot-mcp:local
     stdin_open: true
     tty: false
     environment:

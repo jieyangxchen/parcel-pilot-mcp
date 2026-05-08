@@ -1,4 +1,4 @@
-# Personal Package Assistant MCP Design
+# Parcel Pilot MCP Design
 
 ## Goal
 

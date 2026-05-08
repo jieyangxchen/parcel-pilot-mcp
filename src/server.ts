@@ -45,7 +45,7 @@ export function buildServer(config: AppConfig = loadConfig()): BuiltServer {
   });
 
   const server = new McpServer({
-    name: "personal-package-assistant-mcp",
+    name: "parcel-pilot-mcp",
     version: "0.1.0"
   });
 

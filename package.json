@@ -19,7 +19,7 @@
   "files": [
     "dist",
     "README.md",
-    "README.zh-CN.md",
+    "README.en.md",
     ".env.example"
   ],
   "keywords": [

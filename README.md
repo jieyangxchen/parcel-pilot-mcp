@@ -1,57 +1,96 @@
 # Parcel Pilot MCP
 
-Local-first MCP server for personal package tracking on Taobao, JD, and Cainiao.
+<p align="center">
+  <strong>Your private package-tracking copilot for Taobao, JD, and Cainiao.</strong>
+</p>
 
-This project lets you scan a shopping-site login QR code once, keep the browser session in a private local profile, then ask an AI client to call MCP tools such as `get_my_packages` and `track_package`.
+<p align="center">
+  <a href="README.zh-CN.md">中文</a>
+  ·
+  <a href="#quick-start">Quick start</a>
+  ·
+  <a href="#mcp-tools">MCP tools</a>
+  ·
+  <a href="#security-model">Security</a>
+</p>
 
-It supports two deployment styles:
+<p align="center">
+  <img alt="Node.js >=20" src="https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white">
+  <img alt="MCP stdio" src="https://img.shields.io/badge/MCP-stdio-blue">
+  <img alt="Playwright browser sessions" src="https://img.shields.io/badge/Playwright-browser%20sessions-2EAD33?logo=playwright&logoColor=white">
+  <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-black">
+</p>
 
-- Mac/local first: safest and easiest for personal use.
-- Personal Linux server: useful for always-on access, but protect the saved browser session carefully.
+Parcel Pilot MCP lets you scan a shopping-site login QR code once, keeps the
+browser session in a private local profile, and gives your AI client structured
+package data through MCP.
 
-## What It Does
+Ask your assistant:
 
-- Opens Taobao, JD, and Cainiao login pages in persistent Playwright Chromium profiles.
-- Returns QR-login screenshot paths for manual login.
-- Reuses the saved browser sessions for later syncs.
-- Normalizes package records into a local JSON cache.
-- Exposes MCP tools over stdio:
-  - `login_taobao`
-  - `login_jd`
-  - `login_cainiao`
-  - `sync_packages`
-  - `get_my_packages`
-  - `track_package`
-  - `get_delivered_today`
+```text
+Show me all packages that are still on the way.
+Did anything arrive today?
+Track my Taobao order from last week.
+```
 
-## Safety Model
+It is designed for personal use on your own Mac or private Linux server. It is
+not an official Taobao, JD, or Cainiao API integration.
 
-This is not an official Taobao/JD API integration. It uses your own local browser sessions.
+## Highlights
 
-- Do not commit `data/`, `var/`, `browser-profiles/`, or `.env`.
-- Do not commit `tmp-login/`; it is only for temporary screenshots or HTML captured during debugging.
-- Do not expose the MCP process directly to the public internet.
-- Use this for your own account on your own server.
-- Captcha, slider verification, SMS verification, and risk-control prompts must be completed manually. This project does not bypass them.
-- Treat `browser-profiles/` as an already logged-in browser. Anyone with access to it may be able to view orders, logistics, addresses, and account pages.
-- Keep payment risk low by disabling small-amount passwordless payment, automatic deductions, and low-friction checkout features in the relevant shopping/payment accounts.
+| Feature | What you get |
+| --- | --- |
+| Local-first login | QR login happens in your own Playwright Chromium profile. |
+| AI-ready tools | Exposes `get_my_packages`, `track_package`, and `get_delivered_today` over MCP stdio. |
+| Multi-provider shape | Taobao, JD, and Cainiao share one normalized package model. |
+| Deployable anywhere | Runs locally on macOS or inside Docker on a private Linux server. |
+| Honest boundaries | Captcha, SMS, slider, and risk-control checks stay manual. No bypass logic. |
 
-## Install
+## Example Output
+
+```json
+{
+  "packages": [
+    {
+      "id": "taobao-1234567890",
+      "source": "taobao",
+      "title": "USB-C cable",
+      "status": "in_transit",
+      "carrier": "Cainiao",
+      "trackingNumber": "YT123456789CN",
+      "lastEvent": "Transporting, estimated delivery today",
+      "updatedAt": "2026-05-08T09:00:00.000+08:00"
+    }
+  ]
+}
+```
+
+## Provider Status
+
+| Provider | Status | Notes |
+| --- | --- | --- |
+| Taobao | Browser-session parser available | Parses the bought-list order page and extracts order-level logistics summaries such as "transporting, estimated delivery today". |
+| JD | Browser-session adapter scaffolded | Login/session flow is present; selectors should be verified against your own account before relying on it. |
+| Cainiao | Browser-session adapter scaffolded | Login/session flow is present; selectors should be verified against your own account before relying on it. |
+
+Shopping sites change frequently, so provider parsers are expected to need
+maintenance.
+
+## Quick Start
 
 ```bash
 npm install
 npm run build
 ```
 
-Playwright installs Chromium during `npm install`. On Linux, install browser system dependencies if Playwright asks for them:
+Playwright installs Chromium during `npm install`. On Linux, install Chromium
+system dependencies if Playwright asks for them:
 
 ```bash
 npx playwright install-deps chromium
 ```
 
-## Configure
-
-Copy `.env.example` to `.env` and adjust paths if needed:
+Copy `.env.example` to `.env`:
 
 ```bash
 PACKAGE_ASSISTANT_DATA_DIR=./data
@@ -61,22 +100,13 @@ PACKAGE_ASSISTANT_HEADLESS=true
 PACKAGE_ASSISTANT_TIMEZONE=Asia/Shanghai
 ```
 
-## Run Locally
-
-```bash
-npm run build
-npm start
-```
-
-## Mac Local Workflow
-
 For first login on macOS, use a visible Chromium window:
 
 ```bash
 PACKAGE_ASSISTANT_HEADLESS=false node dist/cli/open-login-browser.js taobao
 ```
 
-After scanning and completing any manual verification, sync and query:
+After scanning the QR code and completing any manual verification:
 
 ```bash
 node dist/cli/call-tool.js sync_packages '{"source":"taobao"}'
@@ -84,7 +114,9 @@ node dist/cli/call-tool.js get_my_packages
 node dist/cli/call-tool.js track_package '{"packageId":"taobao-ORDER_ID"}'
 ```
 
-For MCP clients, configure stdio command:
+## MCP Client Config
+
+Use stdio from any MCP-compatible client:
 
 ```json
 {
@@ -104,29 +136,42 @@ For MCP clients, configure stdio command:
 }
 ```
 
-## First Login
+## First Login Flow
 
-1. Ask your AI client to call `login_taobao`.
-2. Open the returned `screenshotPath`, usually `var/login/taobao-login.png`.
-3. Scan the QR code with your phone and complete any manual verification.
-4. Repeat with `login_jd` and `login_cainiao` if you want those sources.
+1. Ask your AI client to call `login_taobao`, `login_jd`, or `login_cainiao`.
+2. Open the returned `screenshotPath`, usually under `var/login/`.
+3. Scan the QR code with your phone.
+4. Complete any captcha, SMS, slider, or risk-control prompt manually.
 5. Call `sync_packages`.
 6. Ask `get_my_packages`, `track_package`, or `get_delivered_today`.
 
-If QR screenshots are not enough because the site requires interaction, run the server with a visible browser through noVNC, SSH X forwarding, or a desktop session:
+If a QR screenshot expires too quickly or the site needs interaction, run with
+a visible browser through noVNC, SSH X forwarding, or a desktop session:
 
 ```bash
 PACKAGE_ASSISTANT_HEADLESS=false npm run dev
 ```
 
-## Aliyun Personal Server Deployment
+## MCP Tools
 
-Recommended server setup:
+| Tool | Purpose |
+| --- | --- |
+| `login_taobao` | Opens or refreshes the Taobao login flow and returns login artifacts. |
+| `login_jd` | Opens or refreshes the JD login flow and returns login artifacts. |
+| `login_cainiao` | Opens or refreshes the Cainiao login flow and returns login artifacts. |
+| `sync_packages` | Syncs package data from one provider or all configured providers. |
+| `get_my_packages` | Lists normalized package records, with filters for pending or delivered packages. |
+| `track_package` | Returns details for a known package id. |
+| `get_delivered_today` | Lists packages delivered today in the configured timezone. |
 
-- Docker and Docker Compose
-- Private SSH access
-- MCP used over stdio by an AI client running on the same server, or through SSH/VPN
-- No public unauthenticated HTTP endpoint
+## Private Linux Server
+
+Recommended server shape:
+
+- Docker and Docker Compose.
+- SSH-only access.
+- MCP launched through stdio by an AI client on the same host, or through SSH/VPN.
+- No public unauthenticated HTTP endpoint.
 
 Deploy from your workstation:
 
@@ -134,7 +179,7 @@ Deploy from your workstation:
 ./scripts/aliyun-deploy.sh user@your-server:/opt/parcel-pilot-mcp
 ```
 
-The script uploads source and builds the Docker image on the server. Run one-off tools for login and verification:
+Run one-off login and sync commands on the server:
 
 ```bash
 cd /opt/parcel-pilot-mcp
@@ -144,28 +189,21 @@ docker compose run --rm -T package-assistant node dist/cli/call-tool.js login_ca
 docker compose run --rm -T package-assistant node dist/cli/call-tool.js sync_packages
 ```
 
-The screenshots are written under `var/login/` on the server.
-
-For an interactive login page that does not expire before you scan, start the remote browser:
+For an interactive remote browser:
 
 ```bash
 cd /opt/parcel-pilot-mcp
 docker compose run --rm --service-ports package-assistant ./scripts/remote-browser.sh taobao
-```
-
-Then create an SSH tunnel from your workstation:
-
-```bash
 ssh -N -L 6080:127.0.0.1:6080 user@your-server
 ```
 
-Open:
+Then open:
 
 ```text
 http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale
 ```
 
-For an MCP client that can reach the server through SSH, configure stdio with:
+Example MCP config through SSH:
 
 ```json
 {
@@ -181,35 +219,20 @@ For an MCP client that can reach the server through SSH, configure stdio with:
 }
 ```
 
-## systemd Example
+## Security Model
 
-MCP over stdio is usually launched by the client, so a long-running service is optional. If you wrap it in another local MCP bridge, keep the service private:
+Treat `browser-profiles/` like an already logged-in browser.
 
-```ini
-[Unit]
-Description=Parcel Pilot MCP
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/opt/parcel-pilot-mcp
-Environment=PACKAGE_ASSISTANT_DATA_DIR=/opt/parcel-pilot-mcp/data
-Environment=PACKAGE_ASSISTANT_PROFILE_DIR=/opt/parcel-pilot-mcp/browser-profiles
-Environment=PACKAGE_ASSISTANT_ARTIFACT_DIR=/opt/parcel-pilot-mcp/var
-Environment=PACKAGE_ASSISTANT_HEADLESS=true
-Environment=PACKAGE_ASSISTANT_TIMEZONE=Asia/Shanghai
-ExecStart=/usr/bin/node /opt/parcel-pilot-mcp/dist/server.js
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-```
-
-## Current Limits
-
-- Taobao and JD page selectors may need updates when their websites change.
-- The Taobao adapter currently parses the bought-list order page and extracts order-level logistics summaries such as "运输中预计今天送达".
-- JD and Cainiao use the same browser-session adapter structure, but their real logged-in page selectors should be verified with personal accounts before relying on them.
+- Do not commit `data/`, `var/`, `browser-profiles/`, `.env`, or `tmp-login/`.
+- Do not expose the MCP process, noVNC, or temporary login browser to the public internet.
+- Use this for your own account on a machine you control.
+- Anyone with access to the saved browser profile may be able to view orders,
+  logistics, addresses, and account pages.
+- This project does not bypass captcha, slider verification, SMS verification,
+  or risk-control prompts.
+- Keep payment risk low by disabling small-amount passwordless payment,
+  automatic deductions, and low-friction checkout features in related shopping
+  and payment accounts.
 
 ## Development
 
@@ -217,3 +240,21 @@ WantedBy=multi-user.target
 npm test
 npm run build
 ```
+
+Useful local commands:
+
+```bash
+npm run call-tool -- get_my_packages
+npm run call-tool -- sync_packages '{"source":"taobao"}'
+```
+
+## Roadmap
+
+- Harden JD and Cainiao selectors with more real-world account layouts.
+- Add opt-in redaction for product names and addresses in tool output.
+- Add provider health diagnostics for expired sessions and blocked pages.
+- Add sample MCP client recipes for Claude Desktop, Codex, and other clients.
+
+## License
+
+MIT

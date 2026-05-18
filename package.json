@@ -23,11 +23,16 @@
     ".env.example"
   ],
   "keywords": [
+    "ai-agent",
+    "browser-automation",
+    "local-first",
     "mcp",
-    "taobao",
-    "jd",
+    "model-context-protocol",
+    "package-tracking",
     "packages",
-    "playwright"
+    "playwright",
+    "taobao",
+    "jd"
   ],
   "license": "MIT",
   "dependencies": {

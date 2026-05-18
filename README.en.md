@@ -36,6 +36,17 @@ Track my Taobao order from last week.
 It is designed for personal use on your own Mac or private Linux server. It is
 not an official Taobao, JD, or Cainiao API integration.
 
+The recommended install path is cloning this repository and running it locally.
+There is no published npm package yet; npm distribution can come later after the
+real-page adapters and install flow are more stable.
+
+## First Safe Sync
+
+1. Run the project on your own Mac or private server, without exposing a public endpoint.
+2. Complete Taobao, JD, or Cainiao QR login in a visible browser.
+3. Call `sync_packages` to store package summaries in local JSON.
+4. Ask your AI client: "What is arriving today?"
+
 ## Highlights
 
 | Feature | What you get |
